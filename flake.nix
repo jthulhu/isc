@@ -13,7 +13,12 @@
         name = "inst";
         inst = pkgs.resholve.writeScriptBin name {
           interpreter = "${pkgs.bash}/bin/bash";
-          inputs = with pkgs; [ nix findutils gnused ];
+          inputs = with pkgs; [
+            nix
+            findutils
+            gnused
+            git
+          ];
           execer = [ "cannot:${pkgs.nix}/bin/nix" ]; 
         } (builtins.readFile ./inst.sh);
       in rec {
