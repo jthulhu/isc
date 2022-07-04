@@ -10,11 +10,18 @@
     utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        inst = pkgs.writeShellScriptBin "inst" (builtins.readFile ./inst.sh);
-      in {
+        name = "inst";
+        inst = pkgs.resholve.writeScriptBin name {
+          interpreter = "${pkgs.bash}/bin/bash";
+          inputs = with pkgs; [ nix findutils gnused ];
+          execer = [ "cannot:${pkgs.nix}/bin/nix" ]; 
+        } (builtins.readFile ./inst.sh);
+      in rec {
         packages.inst = inst;
-        defaultPackage = inst;
-        apps.inst = inst;
-        defaultApp = inst;
+        defaultPackage = packages.inst;
+        apps.inst = utils.lib.mkApp {
+          drv = inst;
+        };
+        defaultApp = apps.inst;
       });
 }

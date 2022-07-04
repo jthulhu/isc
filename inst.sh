@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Author: BlackBeans
 
-MYSELF=${0##*/}
+MYSELF=inst
 
 function usage () {
     echo "$MYSELF -- setup a new flake environment"
@@ -13,7 +13,7 @@ function usage () {
     echo '                        the template from'
     echo
     echo 'Name replacement:'
-    echo " $MYSELF will replace every occurence of \`\!NAME\!'"
+    echo " $MYSELF will replace every occurence of \`!NAME!'"
     echo ' with NAME.'
 }
 
@@ -24,8 +24,7 @@ function fatal () {
 
 ORIGIN=github:TheBlackBeans/templates
 
-while [ $# -gt 2 ]
-do
+while (($# > 0)); do
     case "$1" in
 	-h | --help )
 	    usage
@@ -41,17 +40,22 @@ do
 	-* )
 	    fatal Unknown option $1
 	    ;;
+	* )
+	    break
     esac
 done
 
-if [ $# -lt 1 ]; then
+if (($# < 1)); then
     fatal Missing argument TEMPLATE
-elif [ $# -lt 2]; then
+elif (($# < 2)); then
     fatal Missing argument NAME
+elif (($# > 2)); then
+    fatal Too many arguments
 fi
 
 TEMPLATE=$1
-NAME=$2
+PATH=$2
+NAME=${PATH##*/}
 
-nix flake new -t ${ORIGIN}#$TEMPLATE $NAME
-find $NAME -type f -not \( -name .svn -prune -o -name .git -prune \) -print0 | xargs -0 sed -i "s/\!NAME\!/$NAME/g"
+nix flake new -t ${ORIGIN}#$TEMPLATE $PATH || exit 1
+find $PATH -type f -not \( -name .svn -prune -o -name .git -prune \) -print0 | xargs -0 sed -i "s/!NAME!/$NAME/g"
