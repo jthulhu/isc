@@ -22,6 +22,22 @@ function fatal () {
     exit 1
 }
 
+function rename_path () {
+    # shellcheck disable=SC2016
+    file_cmd='f=$(basename "$1")'
+    # shellcheck disable=SC2016
+    dir_cmd='d=$(dirname "$1")'
+    # shellcheck disable=SC2016
+    mv_cmd_first_part='mv "$1" "$d/${f//!NAME!/'
+    mv_cmd_second_part='}"'
+    command="${file_cmd}; ${dir_cmd}; ${mv_cmd_first_part}$NAME${mv_cmd_second_part}"
+    find "$FILE_PATH" -depth -name '*!NAME!*' -exec bash -c "$command" _ {} \;
+}
+
+function rename_content () {
+    find "$FILE_PATH" -type f -not \( -name .svn -prune -o -name .git -prune \) -print0 | xargs -0 sed -i "s/!NAME!/$NAME/g"
+}
+
 ORIGIN=github:TheBlackBeans/templates
 
 while (($# > 0)); do
@@ -38,7 +54,7 @@ while (($# > 0)); do
 	    shift 2
 	    ;;
 	-* )
-	    fatal Unknown option $1
+	    fatal Unknown option "$1"
 	    ;;
 	* )
 	    break
@@ -54,8 +70,9 @@ elif (($# > 2)); then
 fi
 
 TEMPLATE=$1
-PATH=$2
-NAME=${PATH##*/}
+FILE_PATH=$2
+NAME=${FILE_PATH##*/}
 
-nix flake new -t ${ORIGIN}#$TEMPLATE $PATH || exit 1
-find $PATH -type f -not \( -name .svn -prune -o -name .git -prune \) -print0 | xargs -0 sed -i "s/!NAME!/$NAME/g"
+nix flake new -t "${ORIGIN}"#"$TEMPLATE" "$FILE_PATH"
+rename_path
+rename_content

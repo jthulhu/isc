@@ -9,18 +9,15 @@
   outputs = { nixpkgs, utils, ... }:
     utils.lib.eachDefaultSystem (system:
       let
+        inherit (pkgs) writeShellApplication lib stdenv;
         pkgs = import nixpkgs { inherit system; };
         name = "inst";
-        inst = pkgs.resholve.writeScriptBin name {
-          interpreter = "${pkgs.bash}/bin/bash";
-          inputs = with pkgs; [
-            nix
-            findutils
-            gnused
-            git
-          ];
-          execer = [ "cannot:${pkgs.nix}/bin/nix" ]; 
-        } (builtins.readFile ./inst.sh);
+        dependencies = with pkgs; [ nix findutils gnused ];
+        inst = writeShellApplication {
+          inherit name;
+          runtimeInputs = dependencies;
+          text = builtins.readFile ./inst.sh;
+        };
       in rec {
         packages.inst = inst;
         defaultPackage = packages.inst;
