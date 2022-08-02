@@ -12,7 +12,7 @@
         inherit (pkgs) writeShellApplication lib stdenv;
         pkgs = import nixpkgs { inherit system; };
         name = "inst";
-        dependencies = with pkgs; [ nix findutils gnused ];
+        dependencies = with pkgs; [ nix findutils gnused git ];
         inst = writeShellApplication {
           inherit name;
           runtimeInputs = dependencies;
