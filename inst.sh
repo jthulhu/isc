@@ -76,6 +76,7 @@ NAME=${FILE_PATH##*/}
 nix flake new -t "${ORIGIN}"#"$TEMPLATE" "$FILE_PATH"
 rename_path
 rename_content
+cd $FILE_PATH
 git init
 git add .
 git commit - 'From scratch'
