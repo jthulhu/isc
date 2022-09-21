@@ -79,4 +79,4 @@ rename_content
 cd "$FILE_PATH"
 git init
 git add .
-git commit - 'From scratch'
+git commit -m 'From scratch'
