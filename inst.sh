@@ -71,11 +71,11 @@ elif (($# < 2)); then
     fatal Missing argument NAME
 fi
 
-shift 2
-
 TEMPLATE=$1
 FILE_PATH=$2
 NAME=${FILE_PATH##*/}
+
+shift 2
 
 nix flake new -t "${ORIGIN}"#"$TEMPLATE" "$FILE_PATH"
 rename_path
@@ -86,7 +86,7 @@ if [ -f "$INSTINITFILE" ]; then
     bash "$INSTINITFILE" "$@"
     echo "Done."
     rm "$INSTINITFILE"
-elif (($# > 2)); then
+elif (($# > 0)); then
     echo "Warning: $INSTINITFILE wasn't found, and yet extra arguments were provided"
 fi
 git init
