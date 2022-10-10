@@ -53,6 +53,10 @@ while (($# > 0)); do
 	    ORIGIN=$2
 	    shift 2
 	    ;;
+	-- )
+	    shift 1
+	    break
+	    ;;
 	-* )
 	    fatal Unknown option "$1"
 	    ;;
