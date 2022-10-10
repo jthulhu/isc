@@ -71,6 +71,8 @@ elif (($# < 2)); then
     fatal Missing argument NAME
 fi
 
+shift 2
+
 TEMPLATE=$1
 FILE_PATH=$2
 NAME=${FILE_PATH##*/}
