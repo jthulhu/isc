@@ -2,6 +2,8 @@
 # Author: BlackBeans
 
 MYSELF=inst
+ORIGIN=github:TheBlackBeans/templates
+INSTINITFILE=inst-init
 
 function usage () {
     echo "$MYSELF -- setup a new flake environment"
@@ -38,8 +40,6 @@ function rename_content () {
     find "$FILE_PATH" -type f -not \( -name .svn -prune -o -name .git -prune \) -print0 | xargs -0 sed -i "s/!NAME!/$NAME/g"
 }
 
-ORIGIN=github:TheBlackBeans/templates
-
 while (($# > 0)); do
     case "$1" in
 	-h | --help )
@@ -65,8 +65,6 @@ if (($# < 1)); then
     fatal Missing argument TEMPLATE
 elif (($# < 2)); then
     fatal Missing argument NAME
-elif (($# > 2)); then
-    fatal Too many arguments
 fi
 
 TEMPLATE=$1
@@ -77,6 +75,14 @@ nix flake new -t "${ORIGIN}"#"$TEMPLATE" "$FILE_PATH"
 rename_path
 rename_content
 cd "$FILE_PATH"
+if [ -f "$INSTINITFILE" ]; then
+    echo "Running setup..."
+    bash "$INSTINITFILE" "$@"
+    echo "Done."
+    rm "$INSTINITFILE"
+elif (($# > 2)); then
+    echo "Warning: $INSTINITFILE wasn't found, and yet extra arguments were provided"
+fi
 git init
 git add .
 git commit -m 'From scratch'
