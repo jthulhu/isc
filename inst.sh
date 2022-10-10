@@ -3,7 +3,7 @@
 
 MYSELF=inst
 ORIGIN=github:TheBlackBeans/templates
-INSTINITFILE=inst-init
+INSTINITFILE=inst-init.bash
 
 function usage () {
     echo "$MYSELF -- setup a new flake environment"
