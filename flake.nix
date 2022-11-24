@@ -25,5 +25,10 @@
           drv = inst;
         };
         defaultApp = apps.inst;
+        devShell = pkgs.mkShell {
+          packages = with pkgs; [
+            shellcheck
+          ];
+        };
       });
 }
