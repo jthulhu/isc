@@ -89,6 +89,9 @@ if [ -f "$INSTINITFILE" ]; then
 elif (($# > 0)); then
     echo "Warning: $INSTINITFILE wasn't found, and yet extra arguments were provided"
 fi
+if [ -f gitignore ]; then
+    mv {,.}gitignore
+fi
 git init
 git add .
 git commit -m 'From scratch'
