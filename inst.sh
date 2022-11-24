@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
-# Author: BlackBeans
+# Author: jthulhu
 
 MYSELF=inst
-ORIGIN=github:TheBlackBeans/templates
+ORIGIN=github:jthulhu/templates
 INSTINITFILE=inst-init.bash
 
 function usage () {
     echo "$MYSELF -- setup a new flake environment"
-    echo "Usage: $MYSELF [OPTIONS] TEMPLATE NAME"
+    echo "Usage: $MYSELF [OPTIONS] TEMPLATE NAME [ARGS]"
     echo
     echo 'Options:'
     echo ' -h --help:             this message'
     echo ' -o --origin ORIGIN:    uri of the flake to fetch'
     echo '                        the template from'
     echo
+    echo 'Additional arguments:'
+    echo " Every additional argument will be forwarded to $INSTINITFILE, if found."
+    echo ' Otherwise, no additional arguments are accepted.'
+    echo
     echo 'Name replacement:'
-    echo " $MYSELF will replace every occurence of \`!NAME!'"
-    echo ' with NAME.'
+    echo " $MYSELF will replace every occurence of \`!NAME!' with NAME, both in paths and"
+    echo ' within files.'
 }
 
 function fatal () {
