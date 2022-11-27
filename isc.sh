@@ -4,27 +4,60 @@
 MYSELF=isc
 ORIGIN=github:jthulhu/templates
 INSTINITFILE=inst-init.bash
-TEMPLATES=~/.config/templates
-CONFIG=~/.config/machines
+TEMPLATES_DIR=~/.config/templates
+CONFIG_DIR=~/.config/machines
 
 function usage() {
     echo "$MYSELF -- install, setup and configure"
-    echo 'Usage:'
-    echo "  $MYSELF new [<options>] <template> <name> [<args>]"
-    echo "  $MYSELF update [<options>]"
-    echo "  $MYSELF <show|list> [<options>]"
     echo
-    echo 'New options:'
-    echo ' -h --help:               this message'
-    echo ' -o --origin <origin>:    uri of the flake to fetch the template from'
+    echo 'Usage:'
+    echo "  $MYSELF new [-o <origin>] <template> <name> [<args>]    instantiate new project"
+    echo "  $MYSELF update [<options>]                              update system"
+    echo "  $MYSELF list                                     show available templates"
+    echo "  $MYSELF --help                                          show this message"
+}
+
+function new_usage() {
+    echo "$MYSELF new -- setup a new flake environment"
+    echo
+    echo 'Usage:'
+    echo "  $MYSELF new [-o <origin>] <template> <name> [<args>]"
+    echo
+    echo 'Options:'
+    echo '  -o --origin <origin>     uri of the flake to fetch the template from'
     echo
     echo 'Additional arguments:'
-    echo " Every additional argument will be forwarded to $INSTINITFILE, if found."
-    echo ' Otherwise, no additional arguments are accepted.'
+    echo "  Every additional argument will be forwarded to $INSTINITFILE, if found."
+    echo '  Otherwise, no additional arguments are accepted.'
     echo
     echo 'Name replacement:'
-    echo " $MYSELF will replace every occurence of \`!NAME!' with <name>, both in paths and"
-    echo ' within files.'
+    # shellcheck disable=SC2016
+    echo "  $MYSELF"' will replace every occurence of `!NAME!` with <name>, both in paths and'
+    echo '  within files.'
+}
+
+function update_usage() {
+    echo "$MYSELF update -- update the system"
+    echo
+    echo 'Usage:'
+    echo "  $MYSELF update [<options>] <command>"
+    echo
+    echo 'Options:'
+    echo '  -p --push              automatically push every update'
+    echo '  -c --config            the configuration directory'
+    echo '  -t --templates         the templates directory'
+    echo
+    echo 'Command:'
+    echo '  config                 update the configuration'
+    echo '  templates              update the templates'
+    echo '  all                    update everything'
+}
+
+function list_usage() {
+    echo "$MYSELF list -- list the available templates"
+    echo
+    echo 'Usage:'
+    echo "  $MYSELF list"
 }
 
 function fatal() {
@@ -51,17 +84,9 @@ function rename_content() {
 	 -print0 | xargs -0 sed -i "s/!NAME!/$2/g"
 }
 
-function new_usage() {
-    echo "MYSELF new -- setup a new flake environment"
-}
-
 function new() {
     while (($# > 0)); do
 	case "$1" in
-	    -h | --help )
-		new_usage
-		exit 0
-		;;
 	    -o | --origin )
 		if [ $# -lt 2 ]; then
 		    fatal 'Missing argument ORIGIN'
@@ -69,15 +94,17 @@ function new() {
 		ORIGIN=$2
 		shift 2
 		;;
+	    -h | --help )
+		new_usage
+		exit 0
+		;;
 	    -- )
 		shift 1
-		break
 		;;
 	    -* )
 		fatal "Unknown option $1"
 		;;
 	    * )
-		break
 		;;
 	esac
     done
@@ -117,71 +144,90 @@ function new() {
 function update() {
     config=0
     templates=0
-    pull=0
+    push=0
     while (($# > 0)); do
 	case $1 in
 	    -t | --templates )
-		TEMPLATES="$2"
+		TEMPLATES_DIR="$2"
 		shift 2
-		break
 		;;
 	    -c | --config )
-		CONFIG="$2"
+		CONFIG_DIR="$2"
 		shift 2
-		break
 		;;
-	    -p | --pull )
-		pull=1
+	    -p | --push )
+		push=1
 		shift
-		break
+		;;
+	    -h | --help )
+		update_usage
+		exit 0
 		;;
 	    -- )
 		shift
-		break
 		;;
 	    -* )
-		fatal "Unknown option: $1"
+		fatal "Unknown option: '$1'"
 		;;
 	    config )
 		config=1
 		shift
-		break
 		;;
 	    templates )
 		templates=1
 		shift
-		break
+		;;
+	    all )
+		templates=1
+		config=1
+		shift
 		;;
 	    * )
-		fatal "Unknown positional argument: $1"
+		fatal "Unknown positional argument: '$1'"
 		;;
 	esac
     done
     if (( templates == 1 )); then
-	pushd "$TEMPLATES"
+	pushd "$TEMPLATES_DIR"
 	nix flake update
 	for template in *; do
 	    pushd "$template"
 	    nix flake update
 	    popd
 	done
-	if (( pull == 0 )); then
-	    git pull
+	if (( push == 0 )); then
+	    git push
 	fi
 	popd
     fi
     if (( config == 1 )); then
-	pushd "$CONFIG"
+	pushd "$CONFIG_DIR"
 	nix flake update
-	if (( pull == 0 )); then
-	    git pull
+	if (( push == 0 )); then
+	    git push
 	fi
 	popd
     fi
 }
 
-function list () {
-    nix flake show --json "$TEMPLATES" | jq -r '.template | keys[]'
+function list() {
+    while (($# > 0)); do
+	case $1 in
+	    -h | --help )
+		list_usage
+		exit 0
+		;;
+	    -* )
+		fatal "Unknown argument: '$1'"
+		;;
+	    * )
+		fatal "Unknown positional argument: '$1'"
+		;;
+	esac
+    done
+    echo 'The available templates are the following.'
+    nix flake show --json "$ORIGIN" \
+	| jq -r '.templates | to_entries[] | " - " + .key + ": " + .value.description'
 }
 
 if (($# < 1)); then
@@ -193,26 +239,19 @@ case "$1" in
     new )
 	shift
 	new "$@"
-	break
 	;;
     update )
 	shift
 	update "$@"
-	break
 	;;
     show | list )
 	shift
 	list "$@"
-	break
 	;;
     -h | --help )
 	shift
 	usage
 	exit 0
-	;;
-    -- )
-	shift
-	break
 	;;
     -* )
 	fatal "Unknown argument: '$1'"
