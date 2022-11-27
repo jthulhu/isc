@@ -1,5 +1,5 @@
 {
-  description = "Nix flake installer";
+  description = "Template handler";
 
   inputs = {
     nixpkgs.url = github:nixos/nixpkgs/nixpkgs-unstable;
@@ -11,20 +11,20 @@
       let
         inherit (pkgs) writeShellApplication lib stdenv;
         pkgs = import nixpkgs { inherit system; };
-        name = "inst";
+        name = "isc";
         dependencies = with pkgs; [ nix findutils gnused git ];
-        inst = writeShellApplication {
+        isc = writeShellApplication {
           inherit name;
           runtimeInputs = dependencies;
-          text = builtins.readFile ./inst.sh;
+          text = builtins.readFile ./isc.sh;
         };
       in rec {
-        packages.inst = inst;
-        defaultPackage = packages.inst;
-        apps.inst = utils.lib.mkApp {
-          drv = inst;
+        packages.isc = isc;
+        defaultPackage = packages.isc;
+        apps.isc = utils.lib.mkApp {
+          drv = isc;
         };
-        defaultApp = apps.inst;
+        defaultApp = apps.isc;
         devShell = pkgs.mkShell {
           packages = with pkgs; [
             shellcheck
