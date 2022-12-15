@@ -190,7 +190,7 @@ function update() {
     if (( templates == 1 )); then
 	pushd "$TEMPLATES_DIR"
 	nix flake update
-	for template in *; do
+	for template in */; do
 	    pushd "$template"
 	    nix flake update
 	    popd
