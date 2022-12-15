@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 # Author: jthulhu
 
+function pushd() {
+    # shellcheck disable=SC2164
+    builtin pushd "$@" >/dev/null
+}
+
+# shellcheck disable=SC2120
+function popd() {
+    # shellcheck disable=SC2164
+    builtin popd "$@" >/dev/null
+}
+
 MYSELF=isc
 ORIGIN=github:jthulhu/templates
 INSTINITFILE=inst-init.bash
@@ -105,6 +116,7 @@ function new() {
 		fatal "Unknown option $1"
 		;;
 	    * )
+		break
 		;;
 	esac
     done
@@ -141,9 +153,18 @@ function new() {
     git commit -m 'From scratch'
 }
 
+function update_flake() {
+    nix flake update
+    if [[ "$1" -eq 1 && -f flake.lock ]]; then
+	git add flake.lock
+    fi
+}
+
 function update() {
     config=0
     templates=0
+    add=0
+    commit=0
     push=0
     while (($# > 0)); do
 	case $1 in
@@ -155,7 +176,18 @@ function update() {
 		CONFIG_DIR="$2"
 		shift 2
 		;;
+	    --add )
+		add=1
+		shift
+		;;
+	    --commit )
+		add=1
+		commit=1
+		shift
+		;;
 	    -p | --push )
+		add=1
+		commit=1
 		push=1
 		shift
 		;;
@@ -189,21 +221,30 @@ function update() {
     done
     if (( templates == 1 )); then
 	pushd "$TEMPLATES_DIR"
-	nix flake update
+	update_flake "$add"
 	for template in */; do
+	    if [[ ! -f "$template/flake.nix" ]]; then
+		continue
+	    fi
 	    pushd "$template"
-	    nix flake update
+	    update_flake "$add"
 	    popd
 	done
-	if (( push == 0 )); then
+	if (( commit == 1 )); then
+	    git commit -m 'Update'
+	fi
+	if (( push == 1 )); then
 	    git push
 	fi
 	popd
     fi
     if (( config == 1 )); then
 	pushd "$CONFIG_DIR"
-	nix flake update
-	if (( push == 0 )); then
+	update_flake "$add"
+	if (( commit == 1 )); then
+	    git commit -m 'Update'
+	fi
+	if (( push == 1 )); then
 	    git push
 	fi
 	popd
